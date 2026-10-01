@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introduction aux Systèmes de Recommandation</title>
+<style>
+  :root {
+    --primary: #4f46e5;
+    --primary-dark: #3730a3;
+    --primary-light: #818cf8;
+    --accent: #f59e0b;
+    --accent-light: #fbbf24;
+    --danger: #ef4444;
+    --success: #10b981;
+    --bg: #f8fafc;
+    --bg-alt: #f1f5f9;
+    --surface: #ffffff;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 12px 32px rgba(0,0,0,0.12);
+    --radius: 14px;
+    --radius-lg: 22px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* ================= HERO ================= */
+  .hero {
+    position: relative;
+    min-height: 92vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e1b4b 0%, #4f46e5 50%, #7c3aed 100%);
+    color: white;
+    overflow: hidden;
+    padding: 4rem 1.5rem;
+    text-align: center;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.12) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(245,158,11,0.18) 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, rgba(129,140,248,0.15) 0%, transparent 60%);
+    animation: floatBg 18s ease-in-out infinite alternate;
+  }
+
+  @keyframes floatBg {
+    0%   { transform: scale(1) rotate(0deg); }
+    100% { transform: scale(1.15) rotate(3deg); }
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 900px;
+    animation: fadeUp 1s ease-out;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    padding: 0.5rem 1.2rem;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 50px;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 1.8rem;
+    backdrop-filter: blur(10px);
+  }
+
+  .hero h1 {
+    font-size: clamp(2.2rem, 5.5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .hero h1 .gradient-text {
+    background: linear-gradient(90deg, #fbbf24, #f472b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    opacity: 0.92;
+    max-width: 700px;
+    margin: 0 auto 2.5rem;
+    font-weight: 300;
+  }
+
+  .hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    flex-wrap: wrap;
+    margin-top: 3rem;
+  }
+
+  .hero-stat {
+    text-align: center;
+  }
+
+  .hero-stat-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #fff, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: block;
+  }
+
+  .hero-stat-label {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    letter-spacing: 0.03em;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ================= NAV ================= */
+  .topnav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.8rem 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    transition: box-shadow 0.3s;
+  }
+
+  .topnav a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    padding: 0.45rem 0.9rem;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+
+  .topnav a:hover {
+    color: var(--primary);
+    background: var(--bg-alt);
+  }
+
+  /* ================= LAYOUT ================= */
+  .container {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  section {
+    padding: 5rem 0;
+  }
+
+  section:nth-child(even) {
+    background: var(--bg-alt);
+  }
+
+  .section-header {
+    text-align: center;
+    margin-bottom: 3.5rem;
+  }
+
+  .section-header .eyebrow {
+    display: inline-block;
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+  }
+
+  .section-header h2 {
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.8rem;
+  }
+
+  .section-header p {
+    color: var(--text-muted);
+    max-width: 720px;
+    margin: 0 auto;
+    font-size: 1.05rem;
+  }
+
+  /* ================= REVEAL ================= */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ================= CARDS ================= */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 1.8rem;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    height: 4px;
+    width: 0;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    transition: width 0.4s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-lg);
+    border-color: transparent;
+  }
+
+  .card:hover::before {
+    width: 100%;
+  }
+
+  .card-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.8rem;
+    display: block;
+  }
+
+  .card h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+
+  .card p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .card .examples {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 0.25rem 0.7rem;
+    background: var(--bg-alt);
+    color: var(--primary-dark);
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* ================= TABS ================= */
+  .tabs {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .tab-nav {
+    display: flex;
+    background: var(--bg-alt);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    flex: 1;
+    min-width: 140px;
+    padding: 1.1rem 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    border-bottom: 3px solid transparent;
+    font-family: inherit;
+  }
+
+  .tab-btn:hover {
+    color: var(--primary);
+    background: rgba(79,70,229,0.05);
+  }
+
+  .tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: var(--surface);
+  }
+
+  .tab-panel {
+    padding: 2.5rem;
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .tab-panel.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ================= ACCORDION ================= */
+  .accordion {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .acc-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: box-shadow 0.3s;
+  }
+
+  .acc-item:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  .acc-header {
+    padding: 1.3rem 1.5rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 1.02rem;
+    user-select: none;
+    transition: background 0.2s;
+  }
+
+  .acc-header:hover {
+    background: var(--bg-alt);
+  }
+
+  .acc-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    transition: transform 0.3s;
+  }
+
+  .acc-item.open .acc-icon {
+    transform: rotate(45deg);
+  }
+
+  .acc-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.4s ease;
+    padding: 0 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  .acc-item.open .acc-body {
+    max-height: 500px;
+    padding: 0 1.5rem 1.4rem;
+  }
+
+  /* ================= FORMULA ================= */
+  .formula-box {
+    background: linear-gradient(135deg, #1e1b4b, #4f46e5);
+    color: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    font-family: 'Cambria Math', 'Latin Modern Math', Georgia, serif;
+    text-align: center;
+    font-size: 1.15rem;
+    margin: 1.5rem 0;
+    box-shadow: var(--shadow-md);
+    letter-spacing: 0.02em;
+    overflow-x: auto;
+  }
+
+  .formula-inline {
+    background: var(--bg-alt);
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    font-family: 'Cambria Math', Georgia, serif;
+    color: var(--primary-dark);
+    font-weight: 600;
+  }
+
+  /* ================= MATRIX VIZ ================= */
+  .matrix-viz {
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+    overflow-x: auto;
+  }
+
+  .matrix {
+    border-collapse: separate;
+    border-spacing: 4px;
+    font-size: 0.8rem;
+  }
+
+  .matrix td {
+    width: 38px;
+    height: 38px;
+    text-align: center;
+    border-radius: 8px;
+    background: var(--bg-alt);
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.3s;
+  }
+
+  .matrix td:hover {
+    transform: scale(1.12);
+    z-index: 2;
+    position: relative;
+  }
+
+  .matrix .header {
+    background: transparent;
+    color: var(--primary);
+    font-weight: 700;
+  }
+
+  .matrix .filled { color: white; }
+  .matrix .v1 { background: #c7d2fe; }
+  .matrix .v2 { background: #a5b4fc; }
+  .matrix .v3 { background: #818cf8; }
+  .matrix .v4 { background: #6366f1; }
+  .matrix .v5 { background: #4f46e5; color: white; }
+  .matrix .empty { background: #f1f5f9; color: #cbd5e1; }
+
+  /* ================= CHALLENGES ================= */
+  .challenge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.2rem;
+  }
+
+  .challenge {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    border-left: 5px solid var(--primary);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s;
+  }
+
+  .challenge:hover {
+    transform: translateX(6px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .challenge.warn { border-left-color: var(--accent); }
+  .challenge.danger { border-left-color: var(--danger); }
+  .challenge.success { border-left-color: var(--success); }
+
+  .challenge h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+    color: var(--text);
+  }
+
+  .challenge p {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+  }
+
+  /* ================= TP BOX ================= */
+  .tp-box {
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    border: 2px dashed var(--accent);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
+    margin-top: 2rem;
+    position: relative;
+  }
+
+  .tp-badge {
+    position: absolute;
+    top: -18px;
+    left: 2rem;
+    background: var(--accent);
+    color: white;
+    padding: 0.4rem 1.2rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    box-shadow: var(--shadow-md);
+  }
+
+  .tp-box h3 {
+    margin-bottom: 1rem;
+    font-size: 1.4rem;
+    color: #92400e;
+  }
+
+  .tp-box ol {
+    padding-left: 1.3rem;
+    color: #78350f;
+  }
+
+  .tp-box ol li {
+    margin-bottom: 0.6rem;
+    font-size: 0.96rem;
+  }
+
+  .tp-box code {
+    background: rgba(146,64,14,0.12);
+    padding: 0.1rem 0.45rem;
+    border-radius: 5px;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.88rem;
+    color: #7c2d12;
+  }
+
+  /* ================= QUOTE ================= */
+  .quote {
+    background: var(--surface);
+    border-left: 4px solid var(--primary);
+    padding: 1.5rem 2rem;
+    margin: 2rem 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-style: italic;
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .quote-author {
+    display: block;
+    margin-top: 0.8rem;
+    font-style: normal;
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 0.9rem;
+  }
+
+  /* ================= PIPELINE ================= */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 2rem 0;
+  }
+
+  .pipeline-step {
+    background: var(--surface);
+    border: 2px solid var(--primary-light);
+    padding: 0.9rem 1.2rem;
+    border-radius: var(--radius);
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: var(--primary-dark);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s;
+  }
+
+  .pipeline-step:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.05);
+    border-color: var(--primary);
+  }
+
+  .pipeline-arrow {
+    color: var(--primary);
+    font-size: 1.4rem;
+    font-weight: 700;
+  }
+
+  /* ================= FOOTER ================= */
+  footer {
+    background: #0f172a;
+    color: #94a3b8;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  footer strong {
+    color: white;
+  }
+
+  /* ================= RESPONSIVE ================= */
+  @media (max-width: 640px) {
+    .hero-stats { gap: 1.5rem; }
+    .hero-stat-number { font-size: 1.6rem; }
+    .tab-panel { padding: 1.5rem; }
+    .tab-btn { font-size: 0.82rem; padding: 0.9rem 0.6rem; }
+    section { padding: 3.5rem 0; }
+  }
+
+  /* ================= SCROLLBAR ================= */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg-alt); }
+  ::-webkit-scrollbar-thumb {
+    background: var(--primary-light);
+    border-radius: 5px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+</style>
+</head>
+<body>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <div class="hero-content">
+    <span class="hero-badge">Chapitre 1 · Introduction</span>
+    <h1>Systèmes de <span class="gradient-text">Recommandation</span></h1>
+    <p class="hero-subtitle">
+      Comment l'intelligence artificielle transforme notre façon de découvrir
+      un film, une chanson, un produit, un emploi, ou même un ami.
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-number">35%</span>
+        <span class="hero-stat-label">des ventes Amazon</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-number">80%</span>
+        <span class="hero-stat-label">du temps vu Netflix</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-number">70%</span>
+        <span class="hero-stat-label">des vues YouTube</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-number">10¹⁸</span>
+        <span class="hero-stat-label">combinaisons possibles</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ================= NAV ================= -->
+<nav class="topnav">
+  <a href="#abondance">Le paradoxe</a>
+  <a href="#domaines">Domaines</a>
+  <a href="#formalisation">Formalisation</a>
+  <a href="#feedback">Feedback</a>
+  <a href="#paradigmes">Paradigmes</a>
+  <a href="#questions">Questions</a>
+  <a href="#defis">Défis</a>
+  <a href="#tp">TP 1</a>
+</nav>
+
+<!-- ================= SECTION 1 : PARADOXE ================= -->
+<section id="abondance">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Contexte</span>
+      <h2>Le paradoxe de l'abondance</h2>
+      <p>
+        Nous ne vivons plus dans un monde où l'information manque.
+        Nous vivons dans un monde où <strong>l'attention est la ressource rare</strong>.
+      </p>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card reveal">
+        <span class="card-icon">🎬</span>
+        <h3>Netflix</h3>
+        <p>Plus de 15 000 titres disponibles. Il faudrait <strong>4 ans</strong> pour tout regarder 24h/24. Comment choisir ?</p>
+      </div>
+      <div class="card reveal">
+        <span class="card-icon">🛒</span>
+        <h3>Amazon</h3>
+        <p>Plus de 350 millions de produits. Sans moteur de recommandation, le catalogue est <strong>inutilisable</strong>.</p>
+      </div>
+      <div class="card reveal">
+        <span class="card-icon">🎵</span>
+        <h3>Spotify</h3>
+        <p>Plus de 100 millions de titres. Discover Weekly est devenu un produit à part entière, basé sur la reco.</p>
+      </div>
+      <div class="card reveal">
+        <span class="card-icon">📺</span>
+        <h3>YouTube</h3>
+        <p>800 millions de vidéos, 500 heures uploadées chaque minute. La recommandation est le <strong>cœur du produit</strong>.</p>
+      </div>
+      <div class="card reveal">
+        <span class="card-icon">📱</span>
+        <h3>TikTok</h3>
+        <p>La reco <em>est</em> le produit. Pas d'abonnements, pas de recherche : uniquement un flux personnalisé par IA.</p>
+      </div>
+      <div class="card reveal">
+        <span class="card-icon">📰</span>
+        <h3>Actualités</h3>
+        <p>Des millions d'articles publiés chaque jour. Google News, Flipboard, Apple News filtrent pour vous.</p>
+      </div>
+    </div>
+
+    <div class="quote reveal">
+      « Ce n'est plus une question d'accès à l'information, mais de <strong>filtrage</strong>.
+      Ce que nous voulons, ce n'est pas plus de contenu, c'est le <strong>bon</strong> contenu au <strong>bon</strong> moment. »
+      <span class="quote-author">— Chris Anderson, The Long Tail (2006)</span>
+    </div>
+
+    <div class="formula-box reveal">
+      Abondance du catalogue + Limites cognitives humaines = <strong style="color:#fbbf24">Besoin vital de recommandation</strong>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SECTION 2 : DOMAINES ================= -->
+<section id="domaines">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Applications</span>
+      <h2>Des systèmes partout autour de nous</h2>
+      <p>
+        La recommandation n'est pas un domaine isolé : c'est une <strong>couche transversale</strong>
+        qui irrigue l'ensemble de l'économie numérique et au-delà.
+      </p>
+    </div>
+
+    <div class="cards-grid">
+      <div class="card reveal">
+        <span class="card-icon">🎥</span>
+        <h3>Streaming vidéo</h3>
+        <p>Suggérer le prochain film ou épisode selon l'historique, le moment de la journée, l'humeur.</p>
+        <div class="examples">
+          <span class="tag">Netflix</span><span class="tag">Disney+</span><span class="tag">Prime Video</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">🛍️</span>
+        <h3>E-commerce</h3>
+        <p>« Les clients qui ont acheté X ont aussi acheté Y ». Panier moyen, cross-sell, upsell.</p>
+        <div class="examples">
+          <span class="tag">Amazon</span><span class="tag">Alibaba</span><span class="tag">Cdiscount</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">🎧</span>
+        <h3>Musique</h3>
+        <p>Playlists personnalisées, radios infinies, découverte d'artistes émergents.</p>
+        <div class="examples">
+          <span class="tag">Spotify</span><span class="tag">Deezer</span><span class="tag">Apple Music</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">👥</span>
+        <h3>Réseaux sociaux</h3>
+        <p>Suggérer des amis, des pages, des contenus dans le feed. Le feed <em>est</em> la reco.</p>
+        <div class="examples">
+          <span class="tag">Facebook</span><span class="tag">LinkedIn</span><span class="tag">X</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">🍕</span>
+        <h3>Restauration</h3>
+        <p>Restaurants, plats, moments de livraison. Personnalisation selon goûts, budgets, régimes.</p>
+        <div class="examples">
+          <span class="tag">Uber Eats</span><span class="tag">DoorDash</span><span class="tag">Deliveroo</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">💼</span>
+        <h3>Emploi</h3>
+        <p>Matching candidat-poste à double sens : recommandation pour les recruteurs ET les candidats.</p>
+        <div class="examples">
+          <span class="tag">LinkedIn Jobs</span><span class="tag">Indeed</span><span class="tag">Welcome to the Jungle</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">❤️</span>
+        <h3>Rencontres</h3>
+        <p>Matching mutuel, prise en compte de la réciprocité, équilibre des genres, distance géographique.</p>
+        <div class="examples">
+          <span class="tag">Tinder</span><span class="tag">Hinge</span><span class="tag">Bumble</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">🎓</span>
+        <h3>Éducation</h3>
+        <p>Parcours d'apprentissage adaptatif, prochain cours, exercice au bon niveau de difficulté.</p>
+        <div class="examples">
+          <span class="tag">Coursera</span><span class="tag">Khan Academy</span><span class="tag">Duolingo</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">🩺</span>
+        <h3>Santé</h3>
+        <p>Recommandation de traitements, d'articles scientifiques, de parcours de soins personnalisés.</p>
+        <div class="examples">
+          <span class="tag">PubMed</span><span class="tag">Doximity</span><span class="tag">K Health</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">🏦</span>
+        <h3>Finance</h3>
+        <p>Produits bancaires, assurances, investissements. Recommandation sous contrainte réglementaire forte.</p>
+        <div class="examples">
+          <span class="tag">Banques</span><span class="tag">Fintech</span><span class="tag">Robo-advisors</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">✈️</span>
+        <h3>Voyage</h3>
+        <p>Destinations, hôtels, activités. Très forte dimension contextuelle (saison, budget, groupe).</p>
+        <div class="examples">
+          <span class="tag">Booking</span><span class="tag">Airbnb</span><span class="tag">Expedia</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">📢</span>
+        <h3>Publicité</h3>
+        <p>Le plus grand déploiement industriel de la reco : prédire le CTR pour choisir la meilleure pub.</p>
+        <div class="examples">
+          <span class="tag">Google Ads</span><span class="tag">Meta Ads</span><span class="tag">Criteo</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">🔍</span>
+        <h3>Recherche web</h3>
+        <p>Ranking de documents, requêtes suggérées, « vous avez peut-être voulu dire… ».</p>
+        <div class="examples">
+          <span class="tag">Google</span><span class="tag">Bing</span><span class="tag">DuckDuckGo</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">💻</span>
+        <h3>Développement</h3>
+        <p>Suggestion de dépôts GitHub, de questions Stack Overflow, de packages selon le code écrit.</p>
+        <div class="examples">
+          <span class="tag">GitHub</span><span class="tag">Stack Overflow</span><span class="tag">Copilot</span>
+        </div>
+      </div>
+
+      <div class="card reveal">
+        <span class="card-icon">📚</span>
+        <h3>Lecture & médias</h3>
+        <p>Livres, podcasts, newsletters. Le retour utilisateur y est souvent plus rare mais plus fort.</p>
+        <div class="examples">
+          <span class="tag">Goodreads</span><span class="tag">Audible</span><span class="tag">Medium</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SECTION 3 : FORMALISATION ================= -->
+<section id="formalisation">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Mathématiques</span>
+      <h2>Formalisation du problème</h2>
+      <p>Derrière chaque recommandation se cache une structure mathématique précise.</p>
+    </div>
+
+    <div class="reveal">
+      <p style="text-align:center; max-width:820px; margin:0 auto 1rem;">
+        On considère un ensemble d'<strong>utilisateurs</strong> et un ensemble d'<strong>items</strong> :
+      </p>
+
+      <div class="formula-box">
+        U = { u<sub>1</sub>, u<sub>2</sub>, …, u<sub>m</sub> } &nbsp;&nbsp;·&nbsp;&nbsp;
+        I = { i<sub>1</sub>, i<sub>2</sub>, …, i<sub>n</sub> }
+      </div>
+
+      <p style="text-align:center; max-width:820px; margin:1.5rem auto 0;">
+        Chaque interaction observée entre un utilisateur <em>u</em> et un item <em>i</em>
+        produit une valeur <em>r<sub>ui</sub></em> (note, clic, achat…).
+        L'ensemble forme la <strong>matrice User–Item</strong> :
+      </p>
+
+      <div class="matrix-viz">
+        <table class="matrix">
+          <tr>
+            <td class="header"></td>
+            <td class="header">🎬</td>
+            <td class="header">🎵</td>
+            <td class="header">📚</td>
+            <td class="header">🎮</td>
+            <td class="header">📺</td>
+          </tr>
+          <tr>
+            <td class="header">Alice</td>
+            <td class="v5">5</td>
+            <td class="v3">3</td>
+            <td class="empty">?</td>
+            <td class="empty">?</td>
+            <td class="v4">4</td>
+          </tr>
+          <tr>
+            <td class="header">Bob</td>
+            <td class="v4">4</td>
+            <td class="empty">?</td>
+            <td class="v2">2</td>
+            <td class="v5">5</td>
+            <td class="empty">?</td>
+          </tr>
+          <tr>
+            <td class="header">Chloé</td>
+            <td class="empty">?</td>
+            <td class="v5">5</td>
+            <td class="v4">4</td>
+            <td class="empty">?</td>
+            <td class="v3">3</td>
+          </tr>
+          <tr>
+            <td class="header">David</td>
+            <td class="v2">2</td>
+            <td class="v4">4</td>
+            <td class="empty">?</td>
+            <td class="v5">5</td>
+            <td class="v4">4</td>
+          </tr>
+        </table>
+      </div>
+
+      <p style="text-align:center; color:var(--text-muted); font-size:0.9rem; margin-bottom:2rem;">
+        Les cases <strong>?</strong> sont les interactions non observées — c'est précisément ce que le système doit prédire.
+      </p>
+
+      <div class="cards-grid">
+        <div class="card">
+          <span class="card-icon">🎯</span>
+          <h3>Objectif 1 — Prédiction de note</h3>
+          <p>Estimer la valeur numérique <span class="formula-inline">r̂<sub>ui</sub></span> pour toutes les cases vides.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🏆</span>
+          <h3>Objectif 2 — Recommandation Top-N</h3>
+          <p>Produire une liste ordonnée des <strong>N meilleurs items</strong> pour chaque utilisateur.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🕒</span>
+          <h3>Objectif 3 — Recommandation séquentielle</h3>
+          <p>Prédire le <strong>prochain item</strong> en fonction de la séquence d'interactions passées.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SECTION 4 : FEEDBACK ================= -->
+<section id="feedback">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Signaux</span>
+      <h2>Les types de feedback</h2>
+      <p>La qualité d'un système de recommandation dépend d'abord de la qualité de ses données.</p>
+    </div>
+
+    <div class="tabs reveal">
+      <div class="tab-nav">
+        <button class="tab-btn active" data-tab="explicite">⭐ Explicite</button>
+        <button class="tab-btn" data-tab="implicite">👆 Implicite</button>
+        <button class="tab-btn" data-tab="contexte">📍 Contexte</button>
+        <button class="tab-btn" data-tab="hybride">🔀 Comparaison</button>
+      </div>
+
+      <div class="tab-panel active" id="explicite">
+        <h3 style="margin-bottom:1rem;">Feedback explicite</h3>
+        <p style="color:var(--text-muted); margin-bottom:1.5rem;">
+          L'utilisateur <strong>exprime volontairement</strong> son avis. Signal très fiable, mais <em>rare</em> et <em>biaisé</em>.
+        </p>
+        <div class="cards-grid">
+          <div class="card">
+            <span class="card-icon">⭐</span>
+            <h3>Notes (1–5)</h3>
+            <p>Netflix (historique), Amazon, IMDb, MovieLens. Base des datasets académiques.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">👍</span>
+            <h3>Likes / Pouce</h3>
+            <p>YouTube, Spotify, Facebook. Binaire mais riche en signal.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">📝</span>
+            <h3>Commentaires / Avis</h3>
+            <p>Riches en sémantique, exploitables par NLP, mais coûteux à analyser.</p>
+          </div>
+        </div>
+        <div class="formula-box" style="margin-top:1.5rem;">
+          <strong style="color:#fbbf24;">Problème :</strong> seulement 1 à 5 % des utilisateurs notent activement.
+        </div>
+      </div>
+
+      <div class="tab-panel" id="implicite">
+        <h3 style="margin-bottom:1rem;">Feedback implicite</h3>
+        <p style="color:var(--text-muted); margin-bottom:1.5rem;">
+          L'utilisateur <strong>agit sans le dire</strong>. Signal abondant, mais <em>bruité</em> et <em>ambigu</em>.
+        </p>
+        <div class="cards-grid">
+          <div class="card">
+            <span class="card-icon">🖱️</span>
+            <h3>Clics</h3>
+            <p>Base de la publicité en ligne. Un clic ne signifie pas toujours un intérêt réel.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">⏱️</span>
+            <h3>Durée de consultation</h3>
+            <p>YouTube, TikTok. Différencie un vrai visionnage d'un skip rapide.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">🛒</span>
+            <h3>Achats</h3>
+            <p>Signal le plus fort mais le plus rare. Conversion ultime.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">🛍️</span>
+            <h3>Ajout au panier</h3>
+            <p>Intention forte, mais abandon fréquent. Signal intermédiaire.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">🎧</span>
+            <h3>Écoute complète</h3>
+            <p>Spotify : un titre écouté à 90 % pèse beaucoup plus qu'un skip à 5 s.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">⬇️</span>
+            <h3>Scroll & survol</h3>
+            <p>Sur les feeds type Instagram, le temps d'arrêt est un signal majeur.</p>
+          </div>
+        </div>
+        <div class="formula-box" style="margin-top:1.5rem;">
+          <strong style="color:#fbbf24;">Défi :</strong> absence de feedback <em>négatif explicite</em> — on ne sait pas si l'utilisateur n'aime pas, ou n'a simplement pas vu.
+        </div>
+      </div>
+
+      <div class="tab-panel" id="contexte">
+        <h3 style="margin-bottom:1rem;">Contexte</h3>
+        <p style="color:var(--text-muted); margin-bottom:1.5rem;">
+          Le <strong>même utilisateur</strong> n'a pas les mêmes préférences selon le moment, le lieu, l'appareil.
+        </p>
+        <div class="cards-grid">
+          <div class="card">
+            <span class="card-icon">🕐</span>
+            <h3>Temporel</h3>
+            <p>Un documentaire le dimanche matin, une série courte le lundi soir.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">📍</span>
+            <h3>Géographique</h3>
+            <p>Restaurants près de chez soi, vs. destinations de voyage.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">📱</span>
+            <h3>Appareil</h3>
+            <p>Mobile = formats courts. TV = films longs. Desktop = lecture approfondie.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">🎭</span>
+            <h3>Session & humeur</h3>
+            <p>Session « détente » vs. « apprentissage » vs. « achats rapides ».</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">👨‍👩‍👧</span>
+            <h3>Social</h3>
+            <p>Regarder seul ou en famille change complètement la recommandation.</p>
+          </div>
+          <div class="card">
+            <span class="card-icon">🌦️</span>
+            <h3>Environnement</h3>
+            <p>Météo, événements, saisonnalité (Noël, Ramadan, vacances).</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="hybride">
+        <h3 style="margin-bottom:1rem;">Comparaison des signaux</h3>
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+            <thead>
+              <tr style="background:var(--bg-alt);">
+                <th style="padding:1rem; text-align:left;">Critère</th>
+                <th style="padding:1rem;">Explicite</th>
+                <th style="padding:1rem;">Implicite</th>
+                <th style="padding:1rem;">Contexte</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:1rem; font-weight:600;">Volume</td>
+                <td style="padding:1rem; text-align:center;">Faible</td>
+                <td style="padding:1rem; text-align:center; color:var(--success); font-weight:600;">Très élevé</td>
+                <td style="padding:1rem; text-align:center;">Élevé</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:1rem; font-weight:600;">Fiabilité</td>
+                <td style="padding:1rem; text-align:center; color:var(--success); font-weight:600;">Élevée</td>
+                <td style="padding:1rem; text-align:center; color:var(--danger);">Bruitée</td>
+                <td style="padding:1rem; text-align:center;">Contextuelle</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:1rem; font-weight:600;">Biais</td>
+                <td style="padding:1rem; text-align:center;">Sélection</td>
+                <td style="padding:1rem; text-align:center;">Position, exposition</td>
+                <td style="padding:1rem; text-align:center;">Temporel</td>
+              </tr>
+              <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:1rem; font-weight:600;">Coût d'obtention</td>
+                <td style="padding:1rem; text-align:center; color:var(--danger);">Élevé</td>
+                <td style="padding:1rem; text-align:center; color:var(--success);">Faible</td>
+                <td style="padding:1rem; text-align:center;">Faible</td>
+              </tr>
+              <tr>
+                <td style="padding:1rem; font-weight:600;">Utilisation typique</td>
+                <td style="padding:1rem; text-align:center;">Éval, académique</td>
+                <td style="padding:1rem; text-align:center;">Industrie</td>
+                <td style="padding:1rem; text-align:center;">Industrie</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SECTION 5 : PARADIGMES ================= -->
+<section id="paradigmes">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Paradigmes</span>
+      <h2>Prédire une note ≠ Recommander</h2>
+      <p>
+        Une distinction fondamentale, souvent mal comprise : l'objectif d'un système industriel
+        n'est <em>pas</em> de prédire <span class="formula-inline">r<sub>ui</sub> = 4,2</span>,
+        mais de produire un <strong>classement</strong>.
+      </p>
+    </div>
+
+    <div class="cards-grid reveal">
+      <div class="card">
+        <span class="card-icon">📊</span>
+        <h3>1. Rating Prediction</h3>
+        <p>Prédire la note exacte. Optimisé par RMSE / MAE. Utile pour l'analyse, mais rarement l'objectif final.</p>
+        <div class="examples"><span class="tag">RMSE</span><span class="tag">MAE</span></div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🏅</span>
+        <h3>2. Top-N Ranking</h3>
+        <p>Produire la meilleure liste ordonnée. On se moque de la note absolue : seul l'<strong>ordre</strong> compte.</p>
+        <div class="examples"><span class="tag">NDCG</span><span class="tag">MAP</span><span class="tag">Recall@K</span></div>
+      </div>
+      <div class="card">
+        <span class="card-icon">⏭️</span>
+        <h3>3. Next-Item Prediction</h3>
+        <p>Prédire le prochain item dans une séquence temporelle. Base de TikTok, YouTube Shorts, Spotify Radio.</p>
+        <div class="examples"><span class="tag">SASRec</span><span class="tag">BERT4Rec</span></div>
+      </div>
+    </div>
+
+    <h3 class="reveal" style="text-align:center; margin:3rem 0 1.5rem; font-size:1.3rem;">
+      Le pipeline industriel moderne
+    </h3>
+
+    <div class="pipeline reveal">
+      <div class="pipeline-step">📥 Candidats (millions)</div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step">⚡ Retrieval (1000)</div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step">🎯 Ranking (100)</div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step">🎨 Re-ranking (10)</div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step">✅ Top-K final</div>
+    </div>
+
+    <div class="formula-box reveal" style="margin-top:2rem;">
+      <span style="font-size:1.4rem;">Retrieval</span> &nbsp;≠&nbsp;
+      <span style="font-size:1.4rem;">Ranking</span> &nbsp;≠&nbsp;
+      <span style="font-size:1.4rem;">Re-ranking</span>
+      <div style="margin-top:0.8rem; font-size:0.9rem; opacity:0.85; font-family:inherit;">
+        Trois problèmes distincts, trois familles de modèles, trois métriques.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SECTION 6 : QUESTIONS ================= -->
+<section id="questions">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Problématiques</span>
+      <h2>Les questions majeures du domaine</h2>
+      <p>Un ingénieur IA doit savoir formuler ces questions avant de coder quoi que ce soit.</p>
+    </div>
+
+    <div class="accordion reveal">
+      <div class="acc-item">
+        <div class="acc-header">
+          <span>🎯 Comment capturer les préférences d'un utilisateur ?</span>
+          <span class="acc-icon">+</span>
+        </div>
+        <div class="acc-body">
+          <p>Faut-il utiliser un profil explicite (démographie, déclarations) ? Un historique d'interactions ? Un modèle latent appris automatiquement ? La réponse détermine toute l'architecture : content-based, collaboratif, ou hybride.</p>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-header">
+          <span>❄️ Comment résoudre le cold start ?</span>
+          <span class="acc-icon">+</span>
+        </div>
+        <div class="acc-body">
+          <p>Un nouvel utilisateur n'a aucun historique. Un nouvel item n'a été vu par personne. Comment recommander malgré tout ? Réponses possibles : popularité, features de contenu, questions d'onboarding, exploration via bandits contextuels.</p>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-header">
+          <span>⚖️ Comment équilibrer précision et diversité ?</span>
+          <span class="acc-icon">+</span>
+        </div>
+        <div class="acc-body">
+          <p>Un modèle purement précis recommande toujours les mêmes hits — c'est le <em>filter bubble</em>. Un modèle trop diversifié perd l'utilisateur. La solution est un objectif multi-critères (précision + couverture + nouveauté + sérindipité).</p>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-header">
+          <span>📏 Comment évaluer correctement un système ?</span>
+          <span class="acc-icon">+</span>
+        </div>
+        <div class="acc-body">
+          <p>Le piège classique : faire un split aléatoire. En production, on prédit le <strong>futur</strong>. Il faut un <em>temporal split</em>. Et se rappeler qu'une métrique hors ligne (NDCG) ne garantit pas l'impact en ligne (A/B test).</p>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-header">
+          <span>🚀 Comment passer à l'échelle sur des millions d'utilisateurs ?</span>
+          <span class="acc-icon">+</span>
+        </div>
+        <div class="acc-body">
+          <p>Impossible de calculer tous les scores utilisateur-item en temps réel. On utilise la <strong>génération de candidats</strong> (ANN, two-tower, ALS) puis un ranking plus fin sur quelques centaines de candidats seulement.</p>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-header">
+          <span>🌍 Comment prendre en compte le contexte ?</span>
+          <span class="acc-icon">+</span>
+        </div>
+        <div class="acc-body">
+          <p>Le moment, le lieu, l'appareil, la session modifient les préférences. Modèles contextuels (Factorization Machines, DeepFM), ou séquentiels (RNN, Transformers).</p>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-header">
+          <span>🧠 Comment expliquer une recommandation ?</span>
+          <span class="acc-icon">+</span>
+        </div>
+        <div class="acc-body">
+          <p>Réglementation (RGPD, AI Act), confiance utilisateur, debug interne. Explications possibles : « parce que vous avez aimé X », « similaire à Y », ou via LLM génératif.</p>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-header">
+          <span>🔒 Comment respecter la vie privée ?</span>
+          <span class="acc-icon">+</span>
+        </div>
+        <div class="acc-body">
+          <p>Anonymisation, differential privacy, federated recommendation (l'entraînement se fait sur l'appareil), chiffrement homomorphe. Un enjeu réglementaire croissant.</p>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-header">
+          <span>⚖️ Comment garantir l'équité (fairness) ?</span>
+          <span class="acc-icon">+</span>
+        </div>
+        <div class="acc-body">
+          <p>Équité entre utilisateurs (pas de traitement discriminatoire), entre groupes démographiques, et entre producteurs de contenu (ne pas favoriser uniquement les gros créateurs).</p>
+        </div>
+      </div>
+
+      <div class="acc-item">
+        <div class="acc-header">
+          <span>🔄 Comment gérer la dérive (concept drift) ?</span>
+          <span class="acc-icon">+</span>
+        </div>
+        <div class="acc-body">
+          <p>Les goûts évoluent, les catalogues changent, les tendances passent. Ré-entraînement incrémental, monitoring continu, détection automatique de drift.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SECTION 7 : DEFIS ================= -->
+<section id="defis">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Défis techniques</span>
+      <h2>Les 9 défis incontournables</h2>
+      <p>Chacun de ces défis structurera les chapitres suivants du cours.</p>
+    </div>
+
+    <div class="challenge-grid">
+      <div class="challenge reveal">
+        <h4>1. Sparsité</h4>
+        <p>La matrice User-Item est remplie à moins de 1 %. Comment apprendre avec si peu de signal ?</p>
+      </div>
+      <div class="challenge warn reveal">
+        <h4>2. Scalabilité</h4>
+        <p>Millions d'utilisateurs × millions d'items. Impossible en temps réel sans approximations.</p>
+      </div>
+      <div class="challenge reveal">
+        <h4>3. Cold start</h4>
+        <p>Nouvel utilisateur ou nouvel item : aucun historique exploitable. Trois sous-problèmes distincts.</p>
+      </div>
+      <div class="challenge danger reveal">
+        <h4>4. Biais de popularité</h4>
+        <p>Les items populaires sont surexposés, les autres jamais vus — cercle vicieux auto-renforçant.</p>
+      </div>
+      <div class="challenge warn reveal">
+        <h4>5. Concept drift</h4>
+        <p>Les goûts changent, les catalogues évoluent. Un modèle entraîné hier peut être obsolète demain.</p>
+      </div>
+      <div class="challenge danger reveal">
+        <h4>6. Filter bubble</h4>
+        <p>Enfermer l'utilisateur dans ses goûts passés. Réduit la découverte et polarise.</p>
+      </div>
+      <div class="challenge success reveal">
+        <h4>7. Explicabilité</h4>
+        <p>« Pourquoi cette recommandation ? » — Question utilisateur, régulateur, et ingénieur.</p>
+      </div>
+      <div class="challenge success reveal">
+        <h4>8. Confidentialité</h4>
+        <p>Les préférences sont des données sensibles. RGPD, AI Act, anonymisation, federated learning.</p>
+      </div>
+      <div class="challenge reveal">
+        <h4>9. Évaluation</h4>
+        <p>Split aléatoire = data leakage. Hors ligne ≠ en ligne. Métriques ≠ impact business.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SECTION 8 : TP ================= -->
+<section id="tp">
+  <div class="container">
+    <div class="section-header reveal">
+      <span class="eyebrow">Travaux pratiques</span>
+      <h2>TP 1 — Explorer un vrai dataset</h2>
+      <p>Première mise en main : comprendre les données avant de modéliser.</p>
+    </div>
+
+    <div class="tp-box reveal">
+      <span class="tp-badge">TP 1 · 2 h</span>
+      <h3>Analyse exploratoire du dataset MovieLens</h3>
+      <p style="color:#78350f; margin-bottom:1.5rem;">
+        Dataset : <strong>MovieLens 100K</strong> ou <strong>MovieLens 1M</strong>
+        (disponible sur <em>grouplens.org</em>).
+        Objectif : comprendre la structure, les distributions, et les difficultés avant toute modélisation.
+      </p>
+
+      <ol>
+        <li><strong>Chargement et structure</strong> : nombre d'utilisateurs, d'items, d'interactions. Vérifier les types.</li>
+        <li><strong>Distribution des notes</strong> : histogramme. Repérer le biais vers les notes hautes (3–5).</li>
+        <li><strong>Distribution par utilisateur</strong> : combien de films chaque utilisateur a notés ? (loi de puissance)</li>
+        <li><strong>Distribution par item</strong> : combien de notes chaque film a reçues ? Long tail marquée ?</li>
+        <li><strong>Sparsité</strong> : calculer <code>1 - nnz / (m × n)</code>. Interpréter.</li>
+        <li><strong>Popularité</strong> : top 20 des films les plus notés. Sont-ils les mieux notés ?</li>
+        <li><strong>Construction de la matrice User-Item</strong> : <code>scipy.sparse</code> ou <code>numpy</code> dense si taille raisonnable.</li>
+        <li><strong>Visualisations</strong> : heatmap de densité, courbe de long tail, matrice de corrélation entre utilisateurs.</li>
+        <li><strong>Bonus</strong> : identifier les utilisateurs et items extrêmes (les plus actifs, les plus rares).</li>
+      </ol>
+
+      <div style="margin-top:1.5rem; padding-top:1.5rem; border-top:1px dashed rgba(146,64,14,0.3);">
+        <strong style="color:#92400e;">Livrables attendus :</strong>
+        <ul style="margin-top:0.6rem; padding-left:1.3rem; color:#78350f; font-size:0.94rem;">
+          <li>Un notebook Jupyter commenté (markdown + code).</li>
+          <li>Au moins 5 visualisations pertinentes.</li>
+          <li>Un paragraphe de synthèse : « Ce que ces données m'apprennent sur les défis à venir. »</li>
+        </ul>
+      </div>
+
+      <div class="formula-box" style="margin-top:1.5rem; background: linear-gradient(135deg, #7c2d12, #b45309);">
+        💡 <em>Question à se poser dès maintenant :</em><br>
+        « Comment recommander un film à un utilisateur qui n'en a noté que 3,<br>
+        dans un catalogue de 10 000 films qu'il n'a jamais vus ? »
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <p>
+    <strong>Module : Systèmes de Recommandation</strong> · 5ᵉ année Ingénieur IA
+  </p>
+  <p style="margin-top:0.6rem; font-size:0.85rem;">
+    Introduction élargie · Chapitre 1 · Volume total du module : 42 h
+  </p>
+  <p style="margin-top:1.5rem; font-size:0.8rem; opacity:0.7;">
+    « Un bon système de recommandation ne dit pas à l'utilisateur ce qu'il veut voir.<br>
+    Il lui fait découvrir ce qu'il ne savait pas vouloir. »
+  </p>
+</footer>
+
+<!-- ================= SCRIPTS ================= -->
+<script>
+  // Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const parent = btn.closest('.tabs');
+      parent.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      parent.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Accordion
+  document.querySelectorAll('.acc-header').forEach(header => {
+    header.addEventListener('click', () => {
+      const item = header.parentElement;
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.acc-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+
+  // Reveal on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Stagger cards
+  document.querySelectorAll('.cards-grid').forEach(grid => {
+    grid.querySelectorAll('.card').forEach((card, i) => {
+      card.style.transitionDelay = (i * 60) + 'ms';
+    });
+  });
+
+  // Open first accordion by default
+  const firstAcc = document.querySelector('.acc-item');
+  if (firstAcc) firstAcc.classList.add('open');
+</script>
+
+</body>
+</html>
